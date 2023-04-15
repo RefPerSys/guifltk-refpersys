@@ -20,13 +20,13 @@ CXXFLAGS= -O2 -g -I /usr/local/include/ \
 all: guifltkrps
 
 clean:
-	$(RM) *.o *~ *.orig guifltkrps
+	$(RM) *.o *~ *.orig guifltkrps a.out
 
 indent:
-	for f in *.hh do ; $(ASTYLE) $(ASTYLEFLAGS) $$f ; done
-	for f in *.cc do ; $(ASTYLE) $(ASTYLEFLAGS) $$f ; done
+	for f in *.hh ; do  $(ASTYLE) $(ASTYLEFLAGS) $$f ; done
+	for f in *.cc ; do  $(ASTYLE) $(ASTYLEFLAGS) $$f ; done
 
 guifltkrps: mainfltk.o jsonrpsfltk.o
-	$(LINK.cc) -O2 -g mainfltk.o jsonrpsfltk.o \
+	$(LINK.cc) -o $@ -O2 -g mainfltk.o jsonrpsfltk.o \
 	           $(shell pkg-config --cflags jsoncpp) \
                    $(shell fltk-config  --ldflags) 
