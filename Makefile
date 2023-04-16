@@ -11,7 +11,8 @@ SHORTGIT_ID:= $(shell ./do-generate-gitid.sh -s)
 CXXFLAGS= -O2 -g -I /usr/local/include/ \
           $(shell pkg-config --cflags  jsoncpp) \
           $(shell fltk-config --cxxflags) \
-	  -DGIT_ID=\"$(GIT_ID)\" -DSHORTGIT_ID=\"$(SHORTGIT_ID)\" 
+	  -DGIT_ID=\"$(GIT_ID)\" -DSHORTGIT_ID=\"$(SHORTGIT_ID)\" \
+	-DBUILD_HOST=\"$(shell hostname -f)\"
 
 
 .PHONY: all objects clean indent
@@ -30,3 +31,7 @@ guifltkrps: mainfltk.o jsonrpsfltk.o
 	$(LINK.cc) -o $@ -O2 -g mainfltk.o jsonrpsfltk.o \
 	           $(shell pkg-config --cflags jsoncpp) \
                    $(shell fltk-config  --ldflags) 
+
+mainfltk.o: mainfltk.cc fltkrps.hh
+
+jsonrpsfltk.o: jsonrpsfltk.cc fltkrps.hh
