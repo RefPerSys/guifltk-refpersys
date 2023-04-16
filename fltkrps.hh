@@ -32,4 +32,6 @@
 #include <FL/Fl_Box.H>
 
 extern "C" const char*progname;
+
+extern "C" int preferred_height, preferred_width;
 #endif /* FLTKRPS_INCLUDED */
