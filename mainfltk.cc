@@ -12,6 +12,7 @@
 
 const char*progname;
 int preferred_height, preferred_width;
+float screen_scale= 1.0;
 
 static const struct option long_options[] =
 {
@@ -25,10 +26,15 @@ static const struct option long_options[] =
         .name=(char*)"help", .has_arg=no_argument, .flag=(int*)nullptr,
         .val=(char)'h'
     },
-    ///  --geometry | -G widthxheight, e.g. --geometry 600x500
+    ///  --geometry | -G widthxheight, e.g. --geometry=600x500
     {
         .name=(char*)"geometry", .has_arg=required_argument, .flag=(int*)nullptr,
         .val=(char)'G'
+    },
+    ///  --scale | -S scale, e.g. --scale=1.6
+    {
+        .name=(char*)"scale", .has_arg=required_argument, .flag=(int*)nullptr,
+        .val=(char)'S'
     },
     /// final sentinel
     { .name=(char*)nullptr, .has_arg=0, .flag=(int*)nullptr, .val=0 }
@@ -42,6 +48,8 @@ show_usage(void)
               << "\t\t# show version" << std::endl
               << "\t --geometry= | -G<width>x<height>  "
               << "\t\t# preferred window geometry" << std::endl
+              << "\t --scale= | -S<scale-factor>  "
+              << "\t\t# preferred scale factor" << std::endl
               << "\t --help | -h                       "
               << "\t\t# give this help" << std::endl
               ;
@@ -89,6 +97,23 @@ parse_program_options (int argc, char*const*argv)
                     std::clog << progname << ": preferred window geometry: width=" << preferred_width << ", height=" << preferred_height << "." << std::endl;
                 }
                 break;
+                case 'S': //// --scale=<float> #e.g. --scale=1.5
+                {
+                    float s=1.0;
+                    if (sscanf(optarg, "%f", &s) < 2)
+                        {
+                            std::cerr << progname << "bad scale " << optarg << std::endl;
+                            exit(EXIT_FAILURE);
+                        };
+                    if (s<0.05) s = 0.05;
+                    if (s>20.0) s = 20.0;
+                    screen_scale = s;
+                    std::clog << progname << ": preferred scale:" << screen_scale << std::endl;
+                }
+                break;
+                default:
+                    std::clog << progname << ": with unexpected argument: " << optarg << std::endl;
+                    exit(EXIT_FAILURE);
                 };
         };
 #warning incomplete parse_program_options should use getopt

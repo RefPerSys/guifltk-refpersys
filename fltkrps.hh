@@ -33,5 +33,12 @@
 
 extern "C" const char*progname;
 
+
+/* preferred dimensions for windows */
 extern "C" int preferred_height, preferred_width;
+
+
+/* preferred screen scale factor */
+extern "C" float screen_scale;
+
 #endif /* FLTKRPS_INCLUDED */
