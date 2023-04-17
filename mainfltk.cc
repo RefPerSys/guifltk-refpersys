@@ -218,5 +218,6 @@ int main(int argc, char**argv)
 {
     progname = argv[0];
     parse_program_options(argc, argv);
+    fl_open_display();
 } // end main
 

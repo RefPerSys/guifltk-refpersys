@@ -33,6 +33,7 @@
 
 /// FLTK headers
 #include <FL/Fl.H>
+#include <Fl/platform.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Box.H>
 
