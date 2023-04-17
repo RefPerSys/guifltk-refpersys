@@ -70,11 +70,23 @@ parse_program_options (int argc, char*const*argv)
             switch (op)
                 {
                 case 'V':			// --version
+                {
+                    int sc= 0;
                     std::clog << progname << " version:" << std::endl
                               << "\t built:" << __DATE__ "@" << __TIME__ << " on " << BUILD_HOST
                               << " git: " << SHORTGIT_ID << std::endl
-                              << "\t FLTK:" << Fl::api_version() << " ABI " << FL_ABI_VERSION << std::endl;
-                    break;
+                              << "\t FLTK:" << Fl::api_version() << " ABI " << FL_ABI_VERSION << std::endl
+                              << "\t screen count:" << Fl::screen_count();
+                    sc = Fl::screen_scaling_supported();
+                    if (sc==0)
+		      std::clog << " no scaling";
+                    else if (sc==1)
+		      std::clog << " shared scaling factor";
+                    else if (sc==2)
+		      std::clog<< " scalable independently";
+                    std::clog<<std::endl;
+                };
+                break;
                 case 'h': /// --help
                     show_usage();
                     break;
@@ -116,7 +128,6 @@ parse_program_options (int argc, char*const*argv)
                     exit(EXIT_FAILURE);
                 };
         };
-#warning incomplete parse_program_options should use getopt
 } // end parse_program_options
 
 int main(int argc, char**argv)
