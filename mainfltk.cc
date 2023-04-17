@@ -14,6 +14,16 @@ const char*progname;
 int preferred_height, preferred_width;
 float screen_scale= 1.0;
 
+struct plugin_st
+{
+    std::string plugin_name;
+    std::string plugin_base;
+    void* plugin_dlh;
+    int plugin_rank;
+};
+
+std::vector<plugin_st> vector_plugins;
+
 static const struct option long_options[] =
 {
     //// --version | -V
@@ -36,9 +46,74 @@ static const struct option long_options[] =
         .name=(char*)"scale", .has_arg=required_argument, .flag=(int*)nullptr,
         .val=(char)'S'
     },
+    ///  --plugin | -P plugin, e.g. --plugin=foo/bar to dlopen
+    ///  the plugin foo/bar.so and dlsym in it fltkrps_bar_start, a nullary
+    ///  --function return true on success...
+    {
+        .name=(char*)"plugin", .has_arg=required_argument, .flag=(int*)nullptr,
+        .val=(char)'P'
+    },
     /// final sentinel
     { .name=(char*)nullptr, .has_arg=0, .flag=(int*)nullptr, .val=0 }
 };
+
+
+bool load_plugin(const char*plugname)
+{
+    char buf[256];
+    memset (buf, 0, sizeof(buf));
+    char basebuf[256];
+    memset(basebuf, 0, sizeof(basebuf));
+    if (!plugname||!plugname[0])
+        return false;
+    if (strlen(plugname)>=sizeof(buf)-16)
+        return false;
+    strcpy(buf, plugname);
+    const char*plugbase = basename(buf);
+    for (const char*p = plugbase; *p; p++)
+        if (!isalnum(*p) && *p != '_')
+            return false;
+    strncpy(basebuf, plugbase, sizeof(basebuf));
+    if (strlen(basebuf)==0 || strlen(basebuf) + 4 >= sizeof(basebuf)) return false;
+    strcpy(buf, plugname);
+    strcat(buf, ".so");
+    void* dlh = dlopen(buf, RTLD_NOW | RTLD_GLOBAL);
+    if (!dlh)
+        {
+            std::clog << progname << " failed to load plugin " << buf << ":" << dlerror() << std::endl;
+            return false;
+        }
+    {
+        typedef bool initrout_t(void);
+        char inibuf[sizeof(buf)+16];
+        memset (inibuf, 0, sizeof(inibuf));
+        snprintf(inibuf, sizeof(inibuf), "fltkrps_%s_start", basebuf);
+        void* ad = dlsym(dlh, inibuf);
+        if (!ad)
+            {
+                std::clog << progname << " failed to dlsym " << inibuf << " in plugin " << buf << ":" << dlerror() << std::endl;
+                dlclose(dlh);
+                return false;
+            }
+        initrout_t*ini = (initrout_t*) ad;
+        bool ok= (*ini)();
+        if (!ok)
+            {
+                std::clog << progname << " failed to initialize plugin " << buf << " using " << inibuf << std::endl;
+                dlclose(dlh);
+                return false;
+            }
+    }
+    plugin_st p;
+    memset(&p, 0, sizeof(p));
+    p.plugin_name.assign(buf) ;
+    p.plugin_base.assign(basebuf);
+    p.plugin_dlh = dlh;
+    p.plugin_rank = vector_plugins.size();
+    vector_plugins.push_back(p);
+    std::clog << progname << " loaded plugin#" << p.plugin_rank << ": "<< p.plugin_name << std::endl;
+    return true;
+} // end load_plugin
 
 static void
 show_usage(void)
@@ -50,6 +125,8 @@ show_usage(void)
               << "\t\t# preferred window geometry" << std::endl
               << "\t --scale= | -S<scale-factor>  "
               << "\t\t# preferred scale factor" << std::endl
+              << "\t --plugin= | -P<plugin-file>  "
+              << "\t\t# plugin (with .so suffix)" << std::endl
               << "\t --help | -h                       "
               << "\t\t# give this help" << std::endl
               ;
@@ -79,11 +156,11 @@ parse_program_options (int argc, char*const*argv)
                               << "\t screen count:" << Fl::screen_count();
                     sc = Fl::screen_scaling_supported();
                     if (sc==0)
-		      std::clog << " no scaling";
+                        std::clog << " no scaling";
                     else if (sc==1)
-		      std::clog << " shared scaling factor";
+                        std::clog << " shared scaling factor";
                     else if (sc==2)
-		      std::clog<< " scalable independently";
+                        std::clog<< " scalable independently";
                     std::clog<<std::endl;
                 };
                 break;
@@ -95,7 +172,7 @@ parse_program_options (int argc, char*const*argv)
                     int w= -1, h= -1;
                     if (sscanf(optarg, "%d[xX]%d", &w, &h) < 2)
                         {
-                            std::cerr << progname << "bad geometry " << optarg
+                            std::cerr << progname << " bad geometry " << optarg
                                       << " expecting <width>x<height> e.g. 400x333"
                                       << std::endl;
                             exit(EXIT_FAILURE);
@@ -123,6 +200,13 @@ parse_program_options (int argc, char*const*argv)
                     std::clog << progname << ": preferred scale:" << screen_scale << std::endl;
                 }
                 break;
+                case 'P': //// --plugin=<basepath> #e.g --plugin=$HOME/lib/myplug
+                    if (!load_plugin(optarg))
+                        {
+                            std::clog << progname << " failed to load plugin " << optarg << std::endl;
+                            exit(EXIT_FAILURE);
+                        };
+                    break;
                 default:
                     std::clog << progname << ": with unexpected argument: " << optarg << std::endl;
                     exit(EXIT_FAILURE);

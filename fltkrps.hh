@@ -26,6 +26,11 @@
 
 /// POSIX headers
 #include <getopt.h>
+#include <libgen.h>
+#include <dlfcn.h>
+#include <errno.h>
+#include <strings.h>
+
 /// FLTK headers
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
@@ -40,5 +45,12 @@ extern "C" int preferred_height, preferred_width;
 
 /* preferred screen scale factor */
 extern "C" float screen_scale;
+
+
+/* Return true if plugin was loaded successfully; A plugin foo/bar
+   dlopen foo/bar.so and calls its function bool fltkrps_bar_start()
+   for initialization, which should return true on success */
+
+extern "C" bool load_plugin(const char*plugname);
 
 #endif /* FLTKRPS_INCLUDED */
