@@ -218,6 +218,7 @@ void
 create_main_window(void)
 {
     main_window = new Fl_Window(preferred_height, preferred_width);
+    main_window->label("guifltk-refpersys");
 } // end create_main_window
 
 int main(int argc, char**argv)
