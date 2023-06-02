@@ -11,9 +11,9 @@
 #include "fltkrps.hh"
 
 const char*progname;
-int preferred_height, preferred_width;
+int preferred_height=333, preferred_width=444;
 float screen_scale= 1.0;
-
+Fl_Window* main_window;
 struct plugin_st
 {
     std::string plugin_name;
@@ -214,10 +214,19 @@ parse_program_options (int argc, char*const*argv)
         };
 } // end parse_program_options
 
+void
+create_main_window(void)
+{
+    main_window = new Fl_Window(preferred_height, preferred_width);
+} // end create_main_window
+
 int main(int argc, char**argv)
 {
     progname = argv[0];
     parse_program_options(argc, argv);
     fl_open_display();
+    create_main_window();
+    main_window->show(argc, argv);
+    return Fl::run();
 } // end main
 

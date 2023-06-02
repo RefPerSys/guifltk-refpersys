@@ -40,6 +40,8 @@
 extern "C" const char*progname;
 
 
+extern "C" Fl_Window* main_window;
+
 /* preferred dimensions for windows */
 extern "C" int preferred_height, preferred_width;
 
