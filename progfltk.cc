@@ -1,4 +1,4 @@
-/**** file guifltk-refpersys/mainfltk.cc ******
+/**** file guifltk-refpersys/progfltk.cc ******
  ****  SPDX-License-Identifier: MIT ******
  *
  * © Copyright 2023 The  Reflective Persistent System Team
@@ -253,4 +253,4 @@ main(int argc, char**argv)
     return Fl::run();
 } // end main
 
-/// enf of file mainfltk.cc
+/// enf of file progfltk.cc

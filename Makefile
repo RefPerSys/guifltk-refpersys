@@ -27,11 +27,11 @@ indent:
 	for f in *.hh ; do  $(ASTYLE) $(ASTYLEFLAGS) $$f ; done
 	for f in *.cc ; do  $(ASTYLE) $(ASTYLEFLAGS) $$f ; done
 
-guifltkrps: mainfltk.o jsonrpsfltk.o
+guifltkrps: progfltk.o jsonrpsfltk.o
 	$(LINK.cc) -o $@ -O2 -g mainfltk.o jsonrpsfltk.o \
 	           $(shell pkg-config --cflags jsoncpp) \
                    $(shell fltk-config  --ldflags) 
 
-mainfltk.o: mainfltk.cc fltkrps.hh
+progfltk.o: progfltk.cc fltkrps.hh
 
 jsonrpsfltk.o: jsonrpsfltk.cc fltkrps.hh
