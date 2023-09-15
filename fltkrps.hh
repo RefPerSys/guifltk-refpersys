@@ -31,6 +31,8 @@
 #include <errno.h>
 #include <strings.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <elf.h>
 
 /// FLTK headers
 #include <FL/Fl.H>
@@ -56,5 +58,9 @@ extern "C" float screen_scale;
    for initialization, which should return true on success */
 
 extern "C" bool load_plugin(const char*plugname);
+
+
+/* Return true if the given string is unique valid RefPerSys path */
+extern "C" bool set_refpersys_path(const char*path);
 
 #endif /* FLTKRPS_INCLUDED */

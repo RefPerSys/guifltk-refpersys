@@ -43,6 +43,11 @@ static const struct option long_options[] =
         .name=(char*)"dimension", .has_arg=required_argument, .flag=(int*)nullptr,
         .val=(char)'D'
     },
+    ///  --refpersys | -r dir, e.g. --refpersys=/home/john/RefPerSys
+    {
+        .name=(char*)"refpersys", .has_arg=required_argument, .flag=(int*)nullptr,
+        .val=(char)'r'
+    },
     ///  --scale | -S scale, e.g. --scale=1.6
     {
         .name=(char*)"scale", .has_arg=required_argument, .flag=(int*)nullptr,
@@ -123,8 +128,10 @@ show_usage(void)
     std::clog << progname << " usage:" << std::endl
               << "\t --version | -V                    "
               << "\t\t# show version" << std::endl
-              << "\t --dimension= | -D<width>x<height>  "
+              << "\t --dimension= | -D <width>x<height>  "
               << "\t\t# preferred window dimension" << std::endl
+              << "\t --refpersys= | -r <directory> " << std::endl
+              << "\t\t# RefPerSys directory, containing source, executable, persistore" << std::endl
               << "\t --scale= | -S<scale-factor>  "
               << "\t\t# preferred scale factor" << std::endl
               << "\t --plugin= | -P<plugin-file>  "
@@ -169,6 +176,15 @@ parse_program_options (int argc, char*const*argv)
                 case 'h': /// --help
                     show_usage();
                     break;
+                case 'r': /// --refpersys <directory>
+                {
+                    if (!set_refpersys_path(optarg))
+                        {
+                            std::cerr << progname << " invalid RefPerSys path: " << optarg << std::endl;
+                            exit (EXIT_FAILURE);
+                        }
+                }
+                break;
                 case 'D': /// --dimension=<width>x<height> # e.g. --geometry 400x333
                 {
                     int w= -1, h= -1;
@@ -231,6 +247,106 @@ create_main_window(void)
     main_window->label("guifltk-refpersys");
 } // end create_main_window
 
+
+bool
+set_refpersys_path(const char*path)
+{
+    static bool alreadycalled;
+    if (alreadycalled)
+        {
+            std::cerr << progname << " cannot set RefPerSys path twice, here to " << path << std::endl;
+            return false;
+        };
+    alreadycalled = true;
+    struct stat srefp;
+    memset(&srefp, 0, sizeof(srefp));
+    if (stat(path, &srefp))
+        {
+            std::cerr << progname << " fails to stat RefPerSys path " << path << " : " << strerror(errno) << "." << std::endl;
+            return false;
+        };
+    if (!srefp.st_mode & S_IFMT != S_IFDIR)
+        {
+            std::cerr << progname << " given RefPerSys path " << path << " is not a directory." << std::endl;
+            return false;
+        };
+    std::string pathstr(path);
+    /// check presence of refpersys executable
+    {
+        std::string exepath=pathstr + "/refpersys";
+        memset(&srefp, 0, sizeof(srefp));
+        if (stat(exepath.c_str(), &srefp))
+            {
+                std::cerr << progname << "  RefPerSys path " << path << " without program " << exepath << ":" << strerror(errno) << "." << std::endl;
+                return false;
+            };
+        if (!srefp.st_mode & S_IFMT != S_IFREG)
+            {
+                std::cerr << progname << " given RefPerSys path " << path << " with non-file " << exepath << " ..." << std::endl;
+                return false;
+            };
+        if (!srefp.st_mode & S_IEXEC)
+            {
+                std::cerr << progname << " given RefPerSys path " << path << " with non-executable " << exepath << " ..." << std::endl;
+                return false;
+            };
+        {
+            FILE* fexe = fopen(exepath.c_str(), "rb");
+            if (!fexe)
+                {
+                    std::cerr << progname << " given RefPerSys path " << path << " has unreadable executable " << exepath  << ":" << strerror(errno) << "." << std::endl;
+                    return false;
+                };
+            Elf64_Ehdr elfhead;
+            memset (&elfhead, 0, sizeof(elfhead));
+            if (fread(&elfhead, sizeof(elfhead), 1, fexe) != 1)
+                {
+                    std::cerr << progname << " given RefPerSys path " << path << " has unreadable ELF executable " << exepath  << ":" << strerror(errno) << "." << std::endl;
+                    fclose(fexe);
+                    return false;
+                };
+            if (elfhead.e_ident[EI_MAG0] != ELFMAG0
+                    || elfhead.e_ident[EI_MAG1] != ELFMAG1
+                    || elfhead.e_ident[EI_MAG2] != ELFMAG2
+                    || elfhead.e_ident[EI_MAG3] != ELFMAG3
+                    || elfhead.e_ident[EI_CLASS] != ELFCLASS64 || elfhead.e_type != ET_EXEC)
+                {
+                    std::cerr << progname << " given RefPerSys path " << path
+                              << " has bad ELF executable " << exepath  << ":" << strerror(errno)
+                              << "." << std::endl;
+                    fclose(fexe);
+                    return false;
+                }
+        }
+    }
+    /// check presence of refpersys.hh header
+    {
+        std::string headerpath=pathstr + "/refpersys.hh";
+        FILE*fhead = fopen(headerpath.c_str(), "r");
+        if (!fhead)
+            {
+                std::cerr << progname << "  RefPerSys path " << path << " without header " << headerpath << ":" << strerror(errno) << "." << std::endl;
+                return false;
+            };
+        char linbuf[64];
+        memset(linbuf, 0, sizeof(linbuf));
+        if (!fgets(linbuf, sizeof(linbuf), fhead))
+            {
+                std::cerr << progname << "  RefPerSys path " << path << " with unreadable header " << headerpath << ":" << strerror(errno) << "." << std::endl;
+                fclose(fhead);
+                return false;
+            };
+        if (linbuf[0] != '/' || linbuf[1] != '*' || linbuf[2] != '*' || linbuf[3] != '*' || linbuf[4] != '*')
+            {
+                std::cerr << progname << "  RefPerSys path " << path << " with bad header first line " << linbuf << std::endl;
+                fclose(fhead);
+                return false;
+            };
+        fclose(fhead);
+    }
+#warning set_refpersys_path is incomplete
+    return true;
+} // end set_refpersys_path
 
 
 
