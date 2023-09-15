@@ -36,10 +36,10 @@ static const struct option long_options[] =
         .name=(char*)"help", .has_arg=no_argument, .flag=(int*)nullptr,
         .val=(char)'h'
     },
-    ///  --geometry | -G widthxheight, e.g. --geometry=600x500
+    ///  --dimension | -D widthxheight, e.g. --dimension=600x500
     {
-        .name=(char*)"geometry", .has_arg=required_argument, .flag=(int*)nullptr,
-        .val=(char)'G'
+        .name=(char*)"dimension", .has_arg=required_argument, .flag=(int*)nullptr,
+        .val=(char)'D'
     },
     ///  --scale | -S scale, e.g. --scale=1.6
     {
@@ -121,8 +121,8 @@ show_usage(void)
     std::clog << progname << " usage:" << std::endl
               << "\t --version | -V                    "
               << "\t\t# show version" << std::endl
-              << "\t --geometry= | -G<width>x<height>  "
-              << "\t\t# preferred window geometry" << std::endl
+              << "\t --dimension= | -D<width>x<height>  "
+              << "\t\t# preferred window dimension" << std::endl
               << "\t --scale= | -S<scale-factor>  "
               << "\t\t# preferred scale factor" << std::endl
               << "\t --plugin= | -P<plugin-file>  "
@@ -139,7 +139,7 @@ parse_program_options (int argc, char*const*argv)
     int ix;
     while ((ix= -1), //
             (op = getopt_long(argc, argv,
-                              "Vh", //short option string
+                              "VhD:P:S:", //short option string
                               long_options,
                               &ix)),
             (op>=0))
@@ -167,12 +167,13 @@ parse_program_options (int argc, char*const*argv)
                 case 'h': /// --help
                     show_usage();
                     break;
-                case 'G': /// --geometry=<width>x<height> # e.g. --geometry 400x333
+                case 'D': /// --dimension=<width>x<height> # e.g. --geometry 400x333
                 {
                     int w= -1, h= -1;
-                    if (sscanf(optarg, "%d[xX]%d", &w, &h) < 2)
+		    int sdim= sscanf(optarg, "%d[xX]%d", &w, &h);
+                    if (sdim < 2)
                         {
-                            std::cerr << progname << " bad geometry " << optarg
+                            std::cerr << progname << " bad dimension " << optarg
                                       << " expecting <width>x<height> e.g. 400x333"
                                       << std::endl;
                             exit(EXIT_FAILURE);
@@ -183,7 +184,7 @@ parse_program_options (int argc, char*const*argv)
                     if (h>2048) h=2048;
                     preferred_width = w;
                     preferred_height = h;
-                    std::clog << progname << ": preferred window geometry: width=" << preferred_width << ", height=" << preferred_height << "." << std::endl;
+                    std::clog << progname << ": preferred window dimension: width=" << preferred_width << ", height=" << preferred_height << "." << std::endl;
                 }
                 break;
                 case 'S': //// --scale=<float> #e.g. --scale=1.5
@@ -231,3 +232,4 @@ int main(int argc, char**argv)
     return Fl::run();
 } // end main
 
+/// enf of file mainfltk.cc
