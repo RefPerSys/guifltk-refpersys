@@ -170,12 +170,14 @@ parse_program_options (int argc, char*const*argv)
                 case 'D': /// --dimension=<width>x<height> # e.g. --geometry 400x333
                 {
                     int w= -1, h= -1;
-		    int sdim= sscanf(optarg, "%d[xX]%d", &w, &h);
+                    errno = 0;
+                    int sdim= sscanf(optarg, "%d[xX]%d", &w, &h);
                     if (sdim < 2)
                         {
                             std::cerr << progname << " bad dimension " << optarg
                                       << " expecting <width>x<height> e.g. 400x333"
-                                      << std::endl;
+                                      << "(sdim=" << sdim
+                                      << " " << strerror(errno) << ")" << std::endl;
                             exit(EXIT_FAILURE);
                         };
                     if (w<100) w=100;
@@ -184,15 +186,20 @@ parse_program_options (int argc, char*const*argv)
                     if (h>2048) h=2048;
                     preferred_width = w;
                     preferred_height = h;
-                    std::clog << progname << ": preferred window dimension: width=" << preferred_width << ", height=" << preferred_height << "." << std::endl;
+                    std::clog << progname << ": preferred window dimension:"
+                              << std::endl << "\t width=" << preferred_width
+                              << ", height=" << preferred_height
+                              << " ..." << std::endl;
                 }
                 break;
                 case 'S': //// --scale=<float> #e.g. --scale=1.5
                 {
                     float s=1.0;
-                    if (sscanf(optarg, "%f", &s) < 2)
+                    errno = 0;
+                    if (sscanf(optarg, "%f", &s) < 1)
                         {
-                            std::cerr << progname << "bad scale " << optarg << std::endl;
+                            std::cerr << progname << "bad scale " << optarg
+                                      << " " << strerror(errno) << std::endl;
                             exit(EXIT_FAILURE);
                         };
                     if (s<0.05) s = 0.05;
