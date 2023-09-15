@@ -30,6 +30,7 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <strings.h>
+#include <unistd.h>
 
 /// FLTK headers
 #include <FL/Fl.H>
@@ -38,7 +39,7 @@
 #include <FL/Fl_Box.H>
 
 extern "C" const char*progname;
-
+extern "C" char myhostname[];
 
 extern "C" Fl_Window* main_window;
 
