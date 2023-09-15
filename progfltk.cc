@@ -251,6 +251,7 @@ create_main_window(void)
 bool
 set_refpersys_path(const char*path)
 {
+  /// in comments path is supposed to be ~/RefPerSys/
     static bool alreadycalled;
     if (alreadycalled)
         {
@@ -271,7 +272,7 @@ set_refpersys_path(const char*path)
             return false;
         };
     std::string pathstr(path);
-    /// check presence of refpersys executable
+    /// check presence of ~/RefPerSys/refpersys executable
     {
         std::string exepath=pathstr + "/refpersys";
         memset(&srefp, 0, sizeof(srefp));
@@ -290,6 +291,7 @@ set_refpersys_path(const char*path)
                 std::cerr << progname << " given RefPerSys path " << path << " with non-executable " << exepath << " ..." << std::endl;
                 return false;
             };
+	/// executable ~/RefPerSys/refpersys should be an ELF binary
         {
             FILE* fexe = fopen(exepath.c_str(), "rb");
             if (!fexe)
@@ -301,7 +303,9 @@ set_refpersys_path(const char*path)
             memset (&elfhead, 0, sizeof(elfhead));
             if (fread(&elfhead, sizeof(elfhead), 1, fexe) != 1)
                 {
-                    std::cerr << progname << " given RefPerSys path " << path << " has unreadable ELF executable " << exepath  << ":" << strerror(errno) << "." << std::endl;
+                    std::cerr << progname << " given RefPerSys path "
+			      << path << " has unreadable ELF executable "
+			      << exepath  << ":" << strerror(errno) << "." << std::endl;
                     fclose(fexe);
                     return false;
                 };
@@ -309,7 +313,8 @@ set_refpersys_path(const char*path)
                     || elfhead.e_ident[EI_MAG1] != ELFMAG1
                     || elfhead.e_ident[EI_MAG2] != ELFMAG2
                     || elfhead.e_ident[EI_MAG3] != ELFMAG3
-                    || elfhead.e_ident[EI_CLASS] != ELFCLASS64 || elfhead.e_type != ET_EXEC)
+                    || elfhead.e_ident[EI_CLASS] != ELFCLASS64
+		|| elfhead.e_type != ET_EXEC)
                 {
                     std::cerr << progname << " given RefPerSys path " << path
                               << " has bad ELF executable " << exepath  << ":" << strerror(errno)
@@ -319,7 +324,7 @@ set_refpersys_path(const char*path)
                 }
         }
     }
-    /// check presence of refpersys.hh header
+    /// check presence of ~/RefPerSys/refpersys.hh header
     {
         std::string headerpath=pathstr + "/refpersys.hh";
         FILE*fhead = fopen(headerpath.c_str(), "r");
@@ -343,6 +348,45 @@ set_refpersys_path(const char*path)
                 return false;
             };
         fclose(fhead);
+    }
+    //// check presence of ~/RefPerSys/LICENSE file
+    {
+      std::string licpath=pathstr + "/LICENSE";
+      FILE*flic = fopen(licpath.c_str(), "r");
+      if (!flic)
+	{
+	  std::cerr << progname << "  RefPerSys path "
+		    << path << " without LICENSE file "
+		    << licpath << ":"
+		    << strerror(errno) << "." << std::endl;
+	  return false;
+	};
+      char linbuf[80];
+      memset(linbuf, 0, sizeof(linbuf));
+      int nbl=0;
+      constexpr int liclinelimit=64;
+      bool gplmentioned=false;
+      while (nbl<liclinelimit && !feof(flic)) {
+	nbl++;
+	memset(linbuf, 0, sizeof(linbuf));
+	if (!fgets(linbuf, sizeof(linbuf)-4, flic))
+	  {
+	    std::cerr << progname << " cannot read line#" << nbl
+		      << " of license file " << licpath
+		      << " :" << strerror(errno) << std::endl;
+	    fclose(flic);
+	    return false;
+	  };
+	if (!gplmentioned)
+	  gplmentioned = strstr(linbuf, "www.gnu.org/licenses");
+      }
+      fclose(flic), flic=nullptr;
+      if (!gplmentioned) 
+	{
+	  std::cerr << progname << "  RefPerSys path "
+		    << path << " with incorrect LICENSE file "
+		    << licpath << "." << std::endl;
+	}
     }
 #warning set_refpersys_path is incomplete
     return true;
