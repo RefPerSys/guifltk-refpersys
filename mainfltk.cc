@@ -11,6 +11,8 @@
 #include "fltkrps.hh"
 
 const char*progname;
+char myhostname[80];
+
 int preferred_height=333, preferred_width=444;
 float screen_scale= 1.0;
 Fl_Window* main_window;
@@ -229,13 +231,25 @@ create_main_window(void)
     main_window->label("guifltk-refpersys");
 } // end create_main_window
 
-int main(int argc, char**argv)
+
+
+
+int
+main(int argc, char**argv)
 {
     progname = argv[0];
+    memset(myhostname, 0, sizeof(myhostname));
+    gethostname(myhostname, sizeof(myhostname)-4);
     parse_program_options(argc, argv);
     fl_open_display();
     create_main_window();
     main_window->show(argc, argv);
+    std::cout << progname << " running pid " << (int)getpid()
+              << " on " << myhostname << " FLTK:" << Fl::abi_version()
+              << ", git "
+              << SHORTGIT_ID << std::endl
+              << ".... built " << __DATE__ "," __TIME__
+              << " on " << BUILD_HOST << std::endl;
     return Fl::run();
 } // end main
 
