@@ -1,4 +1,4 @@
-## file guifltk-refpersys/Makefile
+## file guifltk-refpersys/Makefile for GNU make
 ##  © Copyright 2023 Basile Starynkevitch
 ##
 CXX= g++
@@ -8,12 +8,17 @@ DESTDIR= /usr/local
 RM= /bin/rm -vf
 GIT_ID:= $(shell ./do-generate-gitid.sh)
 SHORTGIT_ID:= $(shell ./do-generate-gitid.sh -s)
-
 CXXFLAGS= -O2 -g -I /usr/local/include/ \
           $(shell pkg-config --cflags  jsoncpp) \
           $(shell fltk-config --cxxflags) \
 	  -DGIT_ID=\"$(GIT_ID)\" -DSHORTGIT_ID=\"$(SHORTGIT_ID)\" \
-	-DBUILD_HOST=\"$(shell hostname -f)\"
+	  -DBUILD_HOST=\"$(shell hostname -f)\"
+
+
+
+################################################################
+## the install target is installing in $DESTDIR/bin
+## the homeinstall target is installing in $HOME/bin
 
 
 .PHONY: all objects clean indent homeinstall install
@@ -42,3 +47,5 @@ guifltkrps: progfltk.o jsonrpsfltk.o
 progfltk.o: progfltk.cc fltkrps.hh
 
 jsonrpsfltk.o: jsonrpsfltk.cc fltkrps.hh
+
+#### end of guifltk-refpersys/Makefile
