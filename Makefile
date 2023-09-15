@@ -3,7 +3,8 @@
 ##
 CXX= g++
 ASTYLE= astyle
-ASTYLEFLAGS= -v  --style=gnu 
+ASTYLEFLAGS= -v  --style=gnu
+DESTDIR= /usr/local
 RM= /bin/rm -vf
 GIT_ID:= $(shell ./do-generate-gitid.sh)
 SHORTGIT_ID:= $(shell ./do-generate-gitid.sh -s)
@@ -15,7 +16,7 @@ CXXFLAGS= -O2 -g -I /usr/local/include/ \
 	-DBUILD_HOST=\"$(shell hostname -f)\"
 
 
-.PHONY: all objects clean indent
+.PHONY: all objects clean indent homeinstall install
 
 
 all: guifltkrps
@@ -26,6 +27,12 @@ clean:
 indent:
 	for f in *.hh ; do  $(ASTYLE) $(ASTYLEFLAGS) $$f ; done
 	for f in *.cc ; do  $(ASTYLE) $(ASTYLEFLAGS) $$f ; done
+
+homeinstall: guifltkrps
+	install  --backup --preserve-timestamps  guifltkrps $$HOME/bin/
+
+install: guifltkrps
+	sudo /usr/bin/install  --backup  --preserve-timestamps  guifltkrps $(DESTDIR)/bin/
 
 guifltkrps: progfltk.o jsonrpsfltk.o
 	$(LINK.cc) -o $@ -O2 -g mainfltk.o jsonrpsfltk.o \
