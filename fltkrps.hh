@@ -33,6 +33,9 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <elf.h>
+#include <sys/types.h>
+#include <dirent.h>
+
 
 /// FLTK headers
 #include <FL/Fl.H>

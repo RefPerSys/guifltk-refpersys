@@ -251,7 +251,7 @@ create_main_window(void)
 bool
 set_refpersys_path(const char*path)
 {
-  /// in comments path is supposed to be ~/RefPerSys/
+    /// in comments path is supposed to be ~/RefPerSys/
     static bool alreadycalled;
     if (alreadycalled)
         {
@@ -291,7 +291,7 @@ set_refpersys_path(const char*path)
                 std::cerr << progname << " given RefPerSys path " << path << " with non-executable " << exepath << " ..." << std::endl;
                 return false;
             };
-	/// executable ~/RefPerSys/refpersys should be an ELF binary
+        /// executable ~/RefPerSys/refpersys should be an ELF binary
         {
             FILE* fexe = fopen(exepath.c_str(), "rb");
             if (!fexe)
@@ -304,8 +304,8 @@ set_refpersys_path(const char*path)
             if (fread(&elfhead, sizeof(elfhead), 1, fexe) != 1)
                 {
                     std::cerr << progname << " given RefPerSys path "
-			      << path << " has unreadable ELF executable "
-			      << exepath  << ":" << strerror(errno) << "." << std::endl;
+                              << path << " has unreadable ELF executable "
+                              << exepath  << ":" << strerror(errno) << "." << std::endl;
                     fclose(fexe);
                     return false;
                 };
@@ -314,7 +314,7 @@ set_refpersys_path(const char*path)
                     || elfhead.e_ident[EI_MAG2] != ELFMAG2
                     || elfhead.e_ident[EI_MAG3] != ELFMAG3
                     || elfhead.e_ident[EI_CLASS] != ELFCLASS64
-		|| elfhead.e_type != ET_EXEC)
+                    || elfhead.e_type != ET_EXEC)
                 {
                     std::cerr << progname << " given RefPerSys path " << path
                               << " has bad ELF executable " << exepath  << ":" << strerror(errno)
@@ -351,44 +351,107 @@ set_refpersys_path(const char*path)
     }
     //// check presence of ~/RefPerSys/LICENSE file
     {
-      std::string licpath=pathstr + "/LICENSE";
-      FILE*flic = fopen(licpath.c_str(), "r");
-      if (!flic)
-	{
-	  std::cerr << progname << "  RefPerSys path "
-		    << path << " without LICENSE file "
-		    << licpath << ":"
-		    << strerror(errno) << "." << std::endl;
-	  return false;
-	};
-      char linbuf[80];
-      memset(linbuf, 0, sizeof(linbuf));
-      int nbl=0;
-      constexpr int liclinelimit=64;
-      bool gplmentioned=false;
-      while (nbl<liclinelimit && !feof(flic)) {
-	nbl++;
-	memset(linbuf, 0, sizeof(linbuf));
-	if (!fgets(linbuf, sizeof(linbuf)-4, flic))
-	  {
-	    std::cerr << progname << " cannot read line#" << nbl
-		      << " of license file " << licpath
-		      << " :" << strerror(errno) << std::endl;
-	    fclose(flic);
-	    return false;
-	  };
-	if (!gplmentioned)
-	  gplmentioned = strstr(linbuf, "www.gnu.org/licenses");
-      }
-      fclose(flic), flic=nullptr;
-      if (!gplmentioned) 
-	{
-	  std::cerr << progname << "  RefPerSys path "
-		    << path << " with incorrect LICENSE file "
-		    << licpath << "." << std::endl;
-	}
+        std::string licpath=pathstr + "/LICENSE";
+        FILE*flic = fopen(licpath.c_str(), "r");
+        if (!flic)
+            {
+                std::cerr << progname << "  RefPerSys path "
+                          << path << " without LICENSE file "
+                          << licpath << ":"
+                          << strerror(errno) << "." << std::endl;
+                return false;
+            };
+        char linbuf[80];
+        memset(linbuf, 0, sizeof(linbuf));
+        int nbl=0;
+        constexpr int liclinelimit=64;
+        bool gplmentioned=false;
+        while (nbl<liclinelimit && !feof(flic))
+            {
+                nbl++;
+                memset(linbuf, 0, sizeof(linbuf));
+                if (!fgets(linbuf, sizeof(linbuf)-4, flic))
+                    {
+                        std::cerr << progname << " cannot read line#" << nbl
+                                  << " of license file " << licpath
+                                  << " :" << strerror(errno) << std::endl;
+                        fclose(flic);
+                        return false;
+                    };
+                if (!gplmentioned)
+                    gplmentioned = strstr(linbuf, "www.gnu.org/licenses");
+            }
+        fclose(flic), flic=nullptr;
+        if (!gplmentioned)
+            {
+                std::cerr << progname << "  RefPerSys path "
+                          << path << " with incorrect LICENSE file "
+                          << licpath << "." << std::endl;
+            }
     }
-#warning set_refpersys_path is incomplete
+    //// check presence of ~/RefPerSys/rps_manifest.json file
+    {
+        std::string manifpath=pathstr + "/rps_manifest.json";
+        FILE*manif = fopen(manifpath.c_str(), "r");
+        if (!manif)
+            {
+                std::cerr << progname << "  RefPerSys path "
+                          << path << " without manifest file "
+                          << manifpath << ":"
+                          << strerror(errno) << "." << std::endl;
+                return false;
+            };
+        char linbuf[80];
+        memset(linbuf, 0, sizeof(linbuf));
+        if (!fgets(linbuf, sizeof(linbuf)-4, manif))
+            {
+                std::cerr << progname << " cannot read first line"
+                          << " of manifest file " << manifpath
+                          << " :" << strerror(errno) << std::endl;
+                fclose(manif);
+                return false;
+            };
+        constexpr const char firstmanif[]="//!! GENERATED file rps_manifest.json / DO NOT EDIT!";
+        if (strncmp(linbuf, firstmanif, sizeof(firstmanif)))
+            {
+                std::cerr << progname << " bad first line"
+                          << " of manifest file " << manifpath << ":" << std::endl
+                          << linbuf << std::endl;
+                fclose(manif);
+                return false;
+            };
+    }
+    //// check presence of ~/RefPerSys/persistore/ directory and that it contains some *json file.
+    {
+        std::string persistpath= pathstr+"/persistore";
+        DIR* persidir= opendir(persistpath.c_str());
+        if (!persidir)
+            {
+                std::cerr << progname << " cannot open RefPerSys persistent store directory " << persistpath
+                          << " :" << strerror(errno) << std::endl;
+                return false;
+            };
+        struct dirent* ent=nullptr;
+        int nbjsonfiles=0;
+        while ((ent=readdir(persidir)) != nullptr)
+            {
+                if (ent->d_type == DT_REG /*regular file*/
+                        && isalnum(ent->d_name[0]))
+                    {
+                        int nlen = strlen(ent->d_name);
+                        if (nlen>10 && !strcmp(ent->d_name+nlen-sizeof(".json"), ".json"))
+                            nbjsonfiles++;
+                    }
+            }
+        closedir(persidir);
+        if (nbjsonfiles==0)
+            {
+                std::cerr << progname
+                          << " did not found JSON files in persistent store directory "
+                          << persistpath << std::endl;
+                return false;
+            }
+    };
     return true;
 } // end set_refpersys_path
 
