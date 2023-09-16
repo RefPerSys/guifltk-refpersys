@@ -372,6 +372,8 @@ set_refpersys_path(const char*path)
                 memset(linbuf, 0, sizeof(linbuf));
                 if (!fgets(linbuf, sizeof(linbuf)-4, flic))
                     {
+                        if (feof(flic))
+                            break;
                         std::cerr << progname << " cannot read line#" << nbl
                                   << " of license file " << licpath
                                   << " :" << strerror(errno) << std::endl;
@@ -412,7 +414,7 @@ set_refpersys_path(const char*path)
                 return false;
             };
         constexpr const char firstmanif[]="//!! GENERATED file rps_manifest.json / DO NOT EDIT!";
-        if (strncmp(linbuf, firstmanif, sizeof(firstmanif)))
+        if (strncmp(linbuf, firstmanif, sizeof(firstmanif)-1))
             {
                 std::cerr << progname << " bad first line"
                           << " of manifest file " << manifpath << ":" << std::endl
@@ -433,13 +435,15 @@ set_refpersys_path(const char*path)
             };
         struct dirent* ent=nullptr;
         int nbjsonfiles=0;
+	int nbent=0;
         while ((ent=readdir(persidir)) != nullptr)
             {
                 if (ent->d_type == DT_REG /*regular file*/
                         && isalnum(ent->d_name[0]))
                     {
+		      nbent++;
                         int nlen = strlen(ent->d_name);
-                        if (nlen>10 && !strcmp(ent->d_name+nlen-sizeof(".json"), ".json"))
+                        if (nlen>10 && !strcmp(ent->d_name+nlen-sizeof(".json")+1, ".json"))
                             nbjsonfiles++;
                     }
             }
@@ -448,7 +452,7 @@ set_refpersys_path(const char*path)
             {
                 std::cerr << progname
                           << " did not found JSON files in persistent store directory "
-                          << persistpath << std::endl;
+                          << persistpath << " with " << nbent << " entries." << std::endl;
                 return false;
             }
     };
