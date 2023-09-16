@@ -40,7 +40,7 @@ install: guifltkrps
 	sudo /usr/bin/install  --backup  --preserve-timestamps  guifltkrps $(DESTDIR)/bin/
 
 guifltkrps: progfltk.o jsonrpsfltk.o
-	$(LINK.cc) -o $@ -O2 -g mainfltk.o jsonrpsfltk.o \
+	$(LINK.cc) -o $@ -O2 -g progfltk.o jsonrpsfltk.o \
 	           $(shell pkg-config --cflags jsoncpp) \
                    $(shell fltk-config  --ldflags) 
 
