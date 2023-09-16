@@ -148,7 +148,7 @@ parse_program_options (int argc, char*const*argv)
     int ix;
     while ((ix= -1), //
             (op = getopt_long(argc, argv,
-                              "VhD:P:S:", //short option string
+                              "VhD:P:S:r:", //short option string
                               long_options,
                               &ix)),
             (op>=0))
@@ -314,10 +314,10 @@ set_refpersys_path(const char*path)
                     || elfhead.e_ident[EI_MAG2] != ELFMAG2
                     || elfhead.e_ident[EI_MAG3] != ELFMAG3
                     || elfhead.e_ident[EI_CLASS] != ELFCLASS64
-                    || elfhead.e_type != ET_EXEC)
+                    || (elfhead.e_type != ET_EXEC && elfhead.e_type != ET_DYN))
                 {
                     std::cerr << progname << " given RefPerSys path " << path
-                              << " has bad ELF executable " << exepath  << ":" << strerror(errno)
+                              << " has bad ELF executable " << exepath
                               << "." << std::endl;
                     fclose(fexe);
                     return false;
@@ -452,6 +452,7 @@ set_refpersys_path(const char*path)
                 return false;
             }
     };
+    std::cout << progname << " using RefPerSys from " << pathstr << " on " << myhostname << " pid " << (int)getpid() << std::endl;
     return true;
 } // end set_refpersys_path
 

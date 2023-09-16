@@ -8,7 +8,7 @@ DESTDIR= /usr/local
 RM= /bin/rm -vf
 GIT_ID:= $(shell ./do-generate-gitid.sh)
 SHORTGIT_ID:= $(shell ./do-generate-gitid.sh -s)
-CXXFLAGS= -O2 -g -I /usr/local/include/ \
+CXXFLAGS= -O2 -g3 -I /usr/local/include/ \
           $(shell pkg-config --cflags  jsoncpp) \
           $(shell fltk-config --cxxflags) \
 	  -DGIT_ID=\"$(GIT_ID)\" -DSHORTGIT_ID=\"$(SHORTGIT_ID)\" \
@@ -40,7 +40,7 @@ install: guifltkrps
 	sudo /usr/bin/install  --backup  --preserve-timestamps  guifltkrps $(DESTDIR)/bin/
 
 guifltkrps: progfltk.o jsonrpsfltk.o
-	$(LINK.cc) -o $@ -O2 -g progfltk.o jsonrpsfltk.o \
+	$(LINK.cc) -o $@ -O2 -g3 progfltk.o jsonrpsfltk.o \
 	           $(shell pkg-config --cflags jsoncpp) \
                    $(shell fltk-config  --ldflags) 
 
