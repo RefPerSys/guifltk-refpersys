@@ -12,7 +12,7 @@
 
 const char*progname;
 char myhostname[80];
-
+std::string my_window_title="GUI-Fltk RefPerSys";
 int preferred_height=333, preferred_width=444;
 float screen_scale= 1.0;
 Fl_Window* main_window;
@@ -53,9 +53,14 @@ static const struct option long_options[] =
         .name=(char*)"scale", .has_arg=required_argument, .flag=(int*)nullptr,
         .val=(char)'S'
     },
+    ///  --title | -T title-string, e.g. --title='Fltk RefPerSys for John'
+    {
+        .name=(char*)"title", .has_arg=required_argument, .flag=(int*)nullptr,
+        .val=(char)'T'
+    },
     ///  --plugin | -P plugin, e.g. --plugin=foo/bar to dlopen
     ///  the plugin foo/bar.so and dlsym in it fltkrps_bar_start, a nullary
-    ///  --function return true on success...
+    ///  function return true on success...
     {
         .name=(char*)"plugin", .has_arg=required_argument, .flag=(int*)nullptr,
         .val=(char)'P'
@@ -136,6 +141,8 @@ show_usage(void)
               << "\t\t# preferred scale factor" << std::endl
               << "\t --plugin= | -P<plugin-file>  "
               << "\t\t# plugin (with .so suffix)" << std::endl
+              << "\t --title= | -T<title>  "
+              << "\t\t# title of the window" << std::endl
               << "\t --help | -h                       "
               << "\t\t# give this help" << std::endl
               ;
@@ -148,7 +155,7 @@ parse_program_options (int argc, char*const*argv)
     int ix;
     while ((ix= -1), //
             (op = getopt_long(argc, argv,
-                              "VhD:P:S:r:", //short option string
+                              "VhD:P:S:r:T:", //short option string
                               long_options,
                               &ix)),
             (op>=0))
@@ -226,6 +233,11 @@ parse_program_options (int argc, char*const*argv)
                     std::clog << progname << ": preferred scale:" << screen_scale << std::endl;
                 }
                 break;
+                case 'T': //// --title=<stringS #e.g. --title='RefPerSys for John'
+                {
+                    my_window_title.assign(optarg);
+                };
+                break;
                 case 'P': //// --plugin=<basepath> #e.g --plugin=$HOME/lib/myplug
                     if (!load_plugin(optarg))
                         {
@@ -244,7 +256,7 @@ void
 create_main_window(void)
 {
     main_window = new Fl_Window(preferred_height, preferred_width);
-    main_window->label("guifltk-refpersys");
+    main_window->label(my_window_title.c_str());
 } // end create_main_window
 
 
@@ -435,13 +447,13 @@ set_refpersys_path(const char*path)
             };
         struct dirent* ent=nullptr;
         int nbjsonfiles=0;
-	int nbent=0;
+        int nbent=0;
         while ((ent=readdir(persidir)) != nullptr)
             {
                 if (ent->d_type == DT_REG /*regular file*/
                         && isalnum(ent->d_name[0]))
                     {
-		      nbent++;
+                        nbent++;
                         int nlen = strlen(ent->d_name);
                         if (nlen>10 && !strcmp(ent->d_name+nlen-sizeof(".json")+1, ".json"))
                             nbjsonfiles++;
