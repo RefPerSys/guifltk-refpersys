@@ -37,6 +37,10 @@
 #include <dirent.h>
 
 
+/// from GNU libunistring
+#include <unitypes.h>
+#include <unistr.h>
+
 /// FLTK headers
 #include <FL/Fl.H>
 #include <Fl/platform.H>
@@ -66,4 +70,17 @@ extern "C" bool load_plugin(const char*plugname);
 /* Return true if the given string is unique valid RefPerSys path */
 extern "C" bool set_refpersys_path(const char*path);
 
+
+/** An important function from RefPerSys code file scalar_rps.cc in
+ *  mid-september 2023.
+ *
+ * compute a long hash in ht[0] and ht[1]. Return the number of UTF-8
+ * character or else 0 if cstr with len bytes is not proper UTF-8.
+ *
+ * This is an important function, whose source code is shared in
+ * guifltk-refpersys.  It uses GNU libunistring library.
+ */
+extern "C" int rps_compute_cstr_two_64bits_hash(int64_t ht[2],
+						const char*cstr,
+						int len= -1);
 #endif /* FLTKRPS_INCLUDED */

@@ -42,7 +42,8 @@ install: guifltkrps
 guifltkrps: progfltk.o jsonrpsfltk.o
 	$(LINK.cc) -o $@ -O2 -g3 progfltk.o jsonrpsfltk.o \
 	           $(shell pkg-config --cflags jsoncpp) \
-                   $(shell fltk-config  --ldflags) 
+                   $(shell fltk-config  --ldflags) \
+                   -lunistring
 
 progfltk.o: progfltk.cc fltkrps.hh
 
