@@ -53,6 +53,11 @@ static const struct option long_options[] =
         .name=(char*)"scale", .has_arg=required_argument, .flag=(int*)nullptr,
         .val=(char)'S'
     },
+    ///  --hashstr | -H string, e.g. --hashstr='abcde'
+    {
+        .name=(char*)"hashstr", .has_arg=required_argument, .flag=(int*)nullptr,
+        .val=(char)'H'
+    },
     ///  --title | -T title-string, e.g. --title='Fltk RefPerSys for John'
     {
         .name=(char*)"title", .has_arg=required_argument, .flag=(int*)nullptr,
@@ -143,6 +148,9 @@ show_usage(void)
               << "\t\t# plugin (with .so suffix)" << std::endl
               << "\t --title= | -T<title>  "
               << "\t\t# title of the window" << std::endl
+              << "\t --hashstr | -H<string>  "
+              << "\t\t# compute and give on stdout the hash of the string"
+              << std::endl
               << "\t --help | -h                       "
               << "\t\t# give this help" << std::endl
               ;
@@ -183,6 +191,29 @@ parse_program_options (int argc, char*const*argv)
                 case 'h': /// --help
                     show_usage();
                     break;
+                case 'H':
+                {
+                    std::clog << progname << " hashing string:" << std::endl
+                              << optarg << std::endl;
+                    int64_t ht[2] = {0,0};
+                    if (rps_compute_cstr_two_64bits_hash(ht, optarg, -1))
+                        {
+                            char buf[128];
+                            memset(buf, 0, sizeof(buf));
+                            snprintf(buf, sizeof(buf),
+                                     "h0=%ld=%#lx h1=%ld=%#lx",
+                                     ht[0], ht[0], ht[1], ht[1]);
+                            std::clog << buf << std::endl;
+                        }
+                    else
+                        {
+                            std::cerr << progname << " failed to rps_compute_cstr_two_64bits_hash on " << optarg << std::endl;
+                            exit (EXIT_FAILURE);
+                        };
+                    std::string optstr(optarg);
+                    std::clog << std::hash<std::string> {}(optarg) << std::endl;
+                }
+                break;
                 case 'r': /// --refpersys <directory>
                 {
                     if (!set_refpersys_path(optarg))

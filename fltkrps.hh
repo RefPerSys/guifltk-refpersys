@@ -47,6 +47,10 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Box.H>
 
+/// standard C++
+#include <functional>
+#include <string>
+
 extern "C" const char*progname;
 extern "C" char myhostname[];
 
@@ -81,6 +85,6 @@ extern "C" bool set_refpersys_path(const char*path);
  * guifltk-refpersys.  It uses GNU libunistring library.
  */
 extern "C" int rps_compute_cstr_two_64bits_hash(int64_t ht[2],
-						const char*cstr,
-						int len= -1);
+        const char*cstr,
+        int len= -1);
 #endif /* FLTKRPS_INCLUDED */
