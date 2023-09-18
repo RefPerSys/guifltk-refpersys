@@ -13,6 +13,7 @@
 const char*progname;
 char myhostname[80];
 std::string my_window_title="GUI-Fltk RefPerSys";
+std::string fifo_prefix;
 int preferred_height=333, preferred_width=444;
 float screen_scale= 1.0;
 Fl_Window* main_window;
@@ -62,6 +63,11 @@ static const struct option long_options[] =
     {
         .name=(char*)"title", .has_arg=required_argument, .flag=(int*)nullptr,
         .val=(char)'T'
+    },
+    ///  --fifo | -F <fifo-prefix>, e.g. --fifo=/tmp/rps
+    {
+        .name=(char*)"fifo", .has_arg=required_argument, .flag=(int*)nullptr,
+        .val=(char)'F'
     },
     ///  --plugin | -P plugin, e.g. --plugin=foo/bar to dlopen
     ///  the plugin foo/bar.so and dlsym in it fltkrps_bar_start, a nullary
@@ -146,6 +152,8 @@ show_usage(void)
               << "\t\t# preferred scale factor" << std::endl
               << "\t --plugin= | -P<plugin-file>  "
               << "\t\t# plugin (with .so suffix)" << std::endl
+              << "\t --fifo= | -F<fifo-prefix>  "
+              << "\t\t# FIFO *.{cmd,out} used to communicate with RefPerSys" << std::endl
               << "\t --title= | -T<title>  "
               << "\t\t# title of the window" << std::endl
               << "\t --hashstr | -H<string>  "
@@ -163,7 +171,7 @@ parse_program_options (int argc, char*const*argv)
     int ix;
     while ((ix= -1), //
             (op = getopt_long(argc, argv,
-                              "VhD:P:S:r:T:", //short option string
+                              "VhD:P:S:r:T:F:", //short option string
                               long_options,
                               &ix)),
             (op>=0))
@@ -264,10 +272,15 @@ parse_program_options (int argc, char*const*argv)
                     std::clog << progname << ": preferred scale:" << screen_scale << std::endl;
                 }
                 break;
-                case 'T': //// --title=<stringS #e.g. --title='RefPerSys for John'
+                case 'T': //// --title=<string> #e.g. --title='RefPerSys for John'
                 {
                     my_window_title.assign(optarg);
                 };
+                break;
+                case 'F': //// --fifo=<fifo-prefix> for {.cmd,.out} to RefPerSys
+                {
+                    fifo_prefix.assign(optarg);
+                }
                 break;
                 case 'P': //// --plugin=<basepath> #e.g --plugin=$HOME/lib/myplug
                     if (!load_plugin(optarg))
