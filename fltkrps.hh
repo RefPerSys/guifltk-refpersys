@@ -35,6 +35,7 @@
 #include <elf.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <fcntl.h>
 
 
 /// from GNU libunistring
@@ -46,6 +47,7 @@
 #include <Fl/platform.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Box.H>
+#include <FL/names.h>
 
 /// standard C++
 #include <functional>
@@ -63,6 +65,12 @@ extern "C" int preferred_height, preferred_width;
 /* preferred screen scale factor */
 extern "C" float screen_scale;
 
+
+/// handler for FIFOs to RefPerSys - in file
+extern "C" void out_fd_handler(int fd, void*data);
+extern "C" void cmd_fd_handler(int fd, void*data);
+
+constexpr unsigned frps_buffer_size = 2048;
 
 /* Return true if plugin was loaded successfully; A plugin foo/bar
    dlopen foo/bar.so and calls its function bool fltkrps_bar_start()
@@ -87,4 +95,6 @@ extern "C" bool set_refpersys_path(const char*path);
 extern "C" int rps_compute_cstr_two_64bits_hash(int64_t ht[2],
         const char*cstr,
         int len= -1);
+
+
 #endif /* FLTKRPS_INCLUDED */
