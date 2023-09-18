@@ -518,6 +518,31 @@ set_refpersys_path(const char*path)
 
 
 
+void
+do_create_fifos(std::string prefix)
+{
+  /// see https://stackoverflow.com/q/7931811/841108
+  std::string cmdfifo= prefix + ".cmd";
+  std::string outfifo= prefix + ".out";
+  errno = 0;
+  if (access(cmdfifo.c_str(), R_OK) && errno == ENOENT)
+    {
+      if (mkfifo(cmdfifo.c_str(), 0660)<0) {
+	std::clog << progname << " failed to create command FIFO " << cmdfifo << " :" << strerror(errno) << std::endl;
+	exit(EXIT_FAILURE);
+      }
+      std::cout << progname << " created command FIFO " << cmdfifo << std::endl;
+    }
+  if (access(outfifo.c_str(), W_OK) && errno == ENOENT)
+    {
+      if (mkfifo(outfifo.c_str(), 0660)<0) {
+	std::clog << progname << " failed to create output FIFO " << outfifo << " :" << strerror(errno) << std::endl;
+	exit(EXIT_FAILURE);
+      }
+      std::cout << progname << " created output FIFO " << outfifo << std::endl;
+    }
+} // end do_create_fifos
+
 int
 main(int argc, char**argv)
 {
@@ -526,6 +551,8 @@ main(int argc, char**argv)
     gethostname(myhostname, sizeof(myhostname)-4);
     parse_program_options(argc, argv);
     fl_open_display();
+    if (!fifo_prefix.empty())
+      do_create_fifos(fifo_prefix);
     create_main_window();
     main_window->show(argc, argv);
     std::cout << progname << " running pid " << (int)getpid()
