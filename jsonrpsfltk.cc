@@ -88,4 +88,32 @@ rps_compute_cstr_two_64bits_hash(int64_t ht[2], const char*cstr, int len)
 
 #warning guifltk-refpersys/jsonrpsfltk.cc is almost empty should contain JSONCPP related code
 
+void
+out_fd_handler(int fd, void*data)
+{
+    char buf[frps_buffer_size+4];
+    memset (buf, 0, sizeof(buf));
+    ssize_t nb = read(fd, buf, frps_buffer_size);
+    if (nb<0)
+        {
+        }
+    else if (nb==0)
+        {
+            // end of file
+            Fl::remove_fd(fd);
+        }
+    else
+        {
+#warning should do something with buf
+        }
+} // end out_fd_handler
+
+void
+cmd_fd_handler(int fd, void*data)
+{
+    char buf[frps_buffer_size];
+    memset (buf, 0, sizeof(buf));
+#warning cmd_fd_handler has to be coded
+} // end cmd_fd_handler
+
 /* TODO: add code to communicate by JSONRPC with refpersys */
