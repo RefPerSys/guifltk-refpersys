@@ -14,6 +14,7 @@ const char*progname;
 char myhostname[80];
 std::string my_window_title="GUI-Fltk RefPerSys";
 std::string fifo_prefix;
+std::vector<std::string> rest_prog_args;
 int preferred_height=333, preferred_width=444;
 float screen_scale= 1.0;
 Fl_Window* main_window;
@@ -176,6 +177,7 @@ parse_program_options (int argc, char*const*argv)
                               &ix)),
             (op>=0))
         {
+            asm volatile ("nop;nop;nop;nop;nop;nop;nop;nop"); // for a GDB breakpoint
             switch (op)
                 {
                 case 'V':			// --version
@@ -294,6 +296,13 @@ parse_program_options (int argc, char*const*argv)
                     exit(EXIT_FAILURE);
                 };
         };
+    asm volatile ("nop;nop;nop;nop;nop;nop;nop;nop"); /// for a GDB breakpoint
+    if (optind < argc)
+        {
+            rest_prog_args.reserve(argc-optind);
+            for (int i=optind; i<argc; i++)
+                rest_prog_args.push_back(std::string{argv[i]});
+        }
 } // end parse_program_options
 
 void
@@ -521,26 +530,30 @@ set_refpersys_path(const char*path)
 void
 do_create_fifos(std::string prefix)
 {
-  /// see https://stackoverflow.com/q/7931811/841108
-  std::string cmdfifo= prefix + ".cmd";
-  std::string outfifo= prefix + ".out";
-  errno = 0;
-  if (access(cmdfifo.c_str(), R_OK) && errno == ENOENT)
-    {
-      if (mkfifo(cmdfifo.c_str(), 0660)<0) {
-	std::clog << progname << " failed to create command FIFO " << cmdfifo << " :" << strerror(errno) << std::endl;
-	exit(EXIT_FAILURE);
-      }
-      std::cout << progname << " created command FIFO " << cmdfifo << std::endl;
-    }
-  if (access(outfifo.c_str(), W_OK) && errno == ENOENT)
-    {
-      if (mkfifo(outfifo.c_str(), 0660)<0) {
-	std::clog << progname << " failed to create output FIFO " << outfifo << " :" << strerror(errno) << std::endl;
-	exit(EXIT_FAILURE);
-      }
-      std::cout << progname << " created output FIFO " << outfifo << std::endl;
-    }
+    /// see https://stackoverflow.com/q/7931811/841108
+    std::string cmdfifo= prefix + ".cmd";
+    std::string outfifo= prefix + ".out";
+    errno = 0;
+    /// the command FIFO is written by RefPerSys, and so is read by this GUI interface
+    if (access(cmdfifo.c_str(), R_OK) && errno == ENOENT)
+        {
+            if (mkfifo(cmdfifo.c_str(), 0660)<0)
+                {
+                    std::clog << progname << " failed to create command FIFO " << cmdfifo << " :" << strerror(errno) << std::endl;
+                    exit(EXIT_FAILURE);
+                }
+            std::cout << progname << " created command FIFO " << cmdfifo << std::endl;
+        }
+    /// the output FIFO is read by RefPerSys so is written by this GUI interface
+    if (access(outfifo.c_str(), W_OK) && errno == ENOENT)
+        {
+            if (mkfifo(outfifo.c_str(), 0660)<0)
+                {
+                    std::clog << progname << " failed to create output FIFO " << outfifo << " :" << strerror(errno) << std::endl;
+                    exit(EXIT_FAILURE);
+                }
+            std::cout << progname << " created output FIFO " << outfifo << std::endl;
+        }
 } // end do_create_fifos
 
 int
@@ -552,7 +565,7 @@ main(int argc, char**argv)
     parse_program_options(argc, argv);
     fl_open_display();
     if (!fifo_prefix.empty())
-      do_create_fifos(fifo_prefix);
+        do_create_fifos(fifo_prefix);
     create_main_window();
     main_window->show(argc, argv);
     std::cout << progname << " running pid " << (int)getpid()
