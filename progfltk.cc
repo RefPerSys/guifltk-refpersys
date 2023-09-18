@@ -10,10 +10,21 @@
 
 #include "fltkrps.hh"
 
+enum my_long_option_en
+{
+    LONGOPT__FIRST= 1000,
+    LONGOPT_START,
+    LONGOPT__LAST
+};
+
+bool do_start_refpersys=false;
 const char*progname;
 char myhostname[80];
 std::string my_window_title="GUI-Fltk RefPerSys";
+
 std::string fifo_prefix;
+int cmdfifofd= -1, outfifofd= -1;
+
 std::vector<std::string> rest_prog_args;
 int preferred_height=333, preferred_width=444;
 float screen_scale= 1.0;
@@ -25,6 +36,8 @@ struct plugin_st
     void* plugin_dlh;
     int plugin_rank;
 };
+
+
 
 std::vector<plugin_st> vector_plugins;
 
@@ -69,6 +82,11 @@ static const struct option long_options[] =
     {
         .name=(char*)"fifo", .has_arg=required_argument, .flag=(int*)nullptr,
         .val=(char)'F'
+    },
+    ///  --start
+    {
+        .name=(char*)"start", .has_arg=no_argument, .flag=(int*)nullptr,
+        .val=LONGOPT_START
     },
     ///  --plugin | -P plugin, e.g. --plugin=foo/bar to dlopen
     ///  the plugin foo/bar.so and dlsym in it fltkrps_bar_start, a nullary
@@ -148,7 +166,7 @@ show_usage(void)
               << "\t --dimension= | -D <width>x<height>  "
               << "\t\t# preferred window dimension" << std::endl
               << "\t --refpersys= | -r <directory> " << std::endl
-              << "\t\t# RefPerSys directory, containing source, executable, persistore" << std::endl
+              << "\t\t# RefPerSys directory, containing its source, executable, persistore" << std::endl
               << "\t --scale= | -S<scale-factor>  "
               << "\t\t# preferred scale factor" << std::endl
               << "\t --plugin= | -P<plugin-file>  "
@@ -160,8 +178,12 @@ show_usage(void)
               << "\t --hashstr | -H<string>  "
               << "\t\t# compute and give on stdout the hash of the string"
               << std::endl
+              << "\t --start               "
+              << "\t\t# really start RefPerSys, using FIFO if provided, and other arguments..."
+              << std::endl
               << "\t --help | -h                       "
               << "\t\t# give this help" << std::endl
+              << "### see also refpersys.org and github.com/RefPerSys/RefPerSys" << std::endl
               ;
 } // end show_usage
 
@@ -291,6 +313,11 @@ parse_program_options (int argc, char*const*argv)
                             exit(EXIT_FAILURE);
                         };
                     break;
+                case LONGOPT_START:
+                {
+                    do_start_refpersys= true;
+                };
+                break;
                 default:
                     std::clog << progname << ": with unexpected argument: " << optarg << std::endl;
                     exit(EXIT_FAILURE);
@@ -565,8 +592,31 @@ main(int argc, char**argv)
     parse_program_options(argc, argv);
     fl_open_display();
     if (!fifo_prefix.empty())
-        do_create_fifos(fifo_prefix);
+        {
+            do_create_fifos(fifo_prefix);
+            std::string cmdfifo= fifo_prefix + ".cmd";
+            std::string outfifo= fifo_prefix + ".out";
+            cmdfifofd = open(cmdfifo.c_str(), 0440| R_OK);
+            if (cmdfifofd < 0)
+                {
+                    int e = errno;
+                    std::clog << progname << " pid " << (int)getpid() << " git " << SHORTGIT_ID
+                              << " failed to open command FIFO " << cmdfifo << " for read : " << strerror(e) << std::endl;
+                    exit(EXIT_FAILURE);
+                };
+            Fl::add_fd(outfifofd, FL_READ, out_fd_handler);
+            outfifofd = open(outfifo.c_str(), 0660| W_OK);
+            if (outfifofd < 0)
+                {
+                    int e = errno;
+                    std::clog << progname << " pid " << (int)getpid() << " git " << SHORTGIT_ID
+                              << " failed to open output FIFO " << outfifo << " for write : " << strerror(e) << std::endl;
+                    exit(EXIT_FAILURE);
+                };
+            Fl::add_fd(cmdfifofd, FL_WRITE, cmd_fd_handler);
+        };
     create_main_window();
+#warning do_start_refpersys should be used
     main_window->show(argc, argv);
     std::cout << progname << " running pid " << (int)getpid()
               << " on " << myhostname << " FLTK:" << Fl::abi_version()
